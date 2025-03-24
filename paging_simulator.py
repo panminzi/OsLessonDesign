@@ -26,7 +26,7 @@ class PagingManager:
 
     def allocate_job(self, job_id, pages):
         if job_id not in self.allocated_frames:
-            frames = [5, 8, 9, 1]  # 手动分配初始帧
+            frames = [5, 8, 9, 1]  # 手动分配初始页
             self.allocated_frames[job_id] = frames
             self.job_fifo[job_id] = deque(frames)
 
@@ -93,9 +93,11 @@ class PagingManager:
                        for e in self.page_table.values())
 
 
-class PagingVisualizer:
-    def __init__(self, root):
-        self.root = root
+class PagingVisualizer(tk.Toplevel):
+    def __init__(self, master, main_window):
+        super().__init__(master)
+        self.main_window = main_window  # 保存主窗口的引用
+        # 其他初始化代码...
         self.manager = PagingManager()
         self.instructions = [
             (0, "+", 0, 72), (1, "/", 1, 50), (2, "×", 2, 15),
@@ -108,11 +110,11 @@ class PagingVisualizer:
         self.update_table()
 
     def setup_gui(self):
-        self.root.title("请求式分页管理模拟器")
-        self.root.geometry("1000x700")
+        self.title("请求式分页管理模拟器")
+        self.geometry("1000x700")
 
         # 主布局
-        main_frame = ttk.Frame(self.root)
+        main_frame = ttk.Frame(self)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         # 顶部区域
@@ -120,9 +122,9 @@ class PagingVisualizer:
         top_frame.pack(fill=tk.BOTH, expand=True)
 
         # 页表
-        self.tree_page = ttk.Treeview(top_frame, columns=("页号", "存在", "帧号", "修改", "磁盘"),
+        self.tree_page = ttk.Treeview(top_frame, columns=("页号", "存在", "页号", "修改", "磁盘"),
                                       show="headings", height=8)
-        for col, width in [("页号", 80), ("存在", 80), ("帧号", 80), ("修改", 80), ("磁盘", 120)]:
+        for col, width in [("页号", 80), ("存在", 80), ("页号", 80), ("修改", 80), ("磁盘", 120)]:
             self.tree_page.heading(col, text=col)
             self.tree_page.column(col, width=width, anchor='center')
         self.tree_page.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -146,7 +148,8 @@ class PagingVisualizer:
         btn_frame.pack(pady=10)
         ttk.Button(btn_frame, text="开始执行", command=self.start_animation).pack(side=tk.LEFT, padx=5)
         ttk.Button(btn_frame, text="重置", command=self.reset).pack(side=tk.LEFT, padx=5)
-
+        # 返回按钮（左）
+        ttk.Button(btn_frame, text="返回主界面", command=self.return_to_main).pack(side=tk.LEFT)
     def update_table(self):
         self.tree_page.delete(*self.tree_page.get_children())
         for page in sorted(self.manager.page_table):
@@ -186,7 +189,7 @@ class PagingVisualizer:
             )
             self.mem_canvas.create_text(
                 x + size / 2, y + size / 2,
-                text=f"帧{frame}\n{'使用中' if used else '空闲'}",
+                text=f"页{frame}\n{'使用中' if used else '空闲'}",
                 font=('宋体', 10),
                 fill="white" if used else "black"
             )
@@ -194,14 +197,14 @@ class PagingVisualizer:
     def start_animation(self):
         for instruction in self.instructions:
             self.process_instruction(instruction)
-            self.root.update()
-            self.root.after(1000)
+            self.update()
+            self.after(1000)
 
     def process_instruction(self, inst):
         step, op, page, offset = inst
         try:
             physical, fault, (victim, frame) = self.manager.access_page("job1", page, op, offset)
-            replace_info = f"页{victim}→帧{frame}" if victim is not None else "-"  # 明确处理None
+            replace_info = f"页{victim}→页{frame}" if victim is not None else "-"  # 明确处理None
 
             # 物理地址格式化
             physical_str = f"{physical} (0x{physical:04X})" if not fault else "-"
@@ -231,6 +234,12 @@ class PagingVisualizer:
         self.update_table()
         self.draw_memory()
 
+        # 设置窗口关闭协议
+        self.protocol("WM_DELETE_WINDOW", self.return_to_main)
+
+    def return_to_main(self):
+        self.main_window.deiconify()  # 显示主窗口
+        self.destroy()  # 销毁当前窗口
 
 if __name__ == "__main__":
     root = tk.Tk()
