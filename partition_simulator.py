@@ -9,7 +9,7 @@ class MemoryManager(tk.Toplevel):  # 改为继承Toplevel
         super().__init__(master)
         self.title("动态分区存储管理模拟")
         self.geometry("800x600")
-
+        self.max_pid = 0  # 最大PID计数器
         # 添加返回按钮（绑定主窗口恢复）
         self.return_button = tk.Button(
             self,
@@ -118,8 +118,9 @@ class MemoryManager(tk.Toplevel):  # 改为继承Toplevel
         # 最先适应算法
         for i, (start, s) in enumerate(self.memory):
             if s >= size:
+                self.max_pid += 1  # 递增最大PID
                 # 分配内存
-                self.allocated.append((start, size, len(self.allocated) + 1))
+                self.allocated.append((start, size,self.max_pid))
                 if s > size:
                     self.memory[i] = (start + size, s - size)
                 else:
@@ -138,8 +139,9 @@ class MemoryManager(tk.Toplevel):  # 改为继承Toplevel
                 best_index = i
                 best_size = s
         if best_index != -1:
+            self.max_pid += 1  # 递增最大PID
             # 分配内存
-            self.allocated.append((self.memory[best_index][0], size, len(self.allocated) + 1))
+            self.allocated.append((self.memory[best_index][0], size, self.max_pid))
             if self.memory[best_index][1] > size:
                 self.memory[best_index] = (self.memory[best_index][0] + size, self.memory[best_index][1] - size)
             else:
@@ -158,8 +160,9 @@ class MemoryManager(tk.Toplevel):  # 改为继承Toplevel
                 worst_index = i
                 worst_size = s
         if worst_index != -1:
+            self.max_pid += 1  # 递增最大PID
             # 分配内存
-            self.allocated.append((self.memory[worst_index][0], size, len(self.allocated) + 1))
+            self.allocated.append((self.memory[worst_index][0], size, self.max_pid))
             if self.memory[worst_index][1] > size:
                 self.memory[worst_index] = (self.memory[worst_index][0] + size, self.memory[worst_index][1] - size)
             else:
@@ -199,6 +202,7 @@ class MemoryManager(tk.Toplevel):  # 改为继承Toplevel
         for start, size, pid in self.allocated:
             self.memory.append((start, size))
         self.allocated = []  # 清空已分配分区表
+        self.max_pid = 0
 
         # 合并所有空闲分区
         self.memory.sort()
@@ -218,9 +222,3 @@ class MemoryManager(tk.Toplevel):  # 改为继承Toplevel
             else:
                 i += 1
 
-
-# 独立运行支持（测试用）
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = MemoryManager(root)
-    root.mainloop()
