@@ -122,9 +122,9 @@ class PagingVisualizer(tk.Toplevel):
         top_frame.pack(fill=tk.BOTH, expand=True)
 
         # 页表
-        self.tree_page = ttk.Treeview(top_frame, columns=("页号", "存在", "页号", "修改", "磁盘"),
+        self.tree_page = ttk.Treeview(top_frame, columns=("页号", "存在", "块号", "修改标志", "磁盘位置"),
                                       show="headings", height=8)
-        for col, width in [("页号", 80), ("存在", 80), ("页号", 80), ("修改", 80), ("磁盘", 120)]:
+        for col, width in [("页号", 80), ("存在", 80), ("块号", 80), ("修改标志", 80), ("磁盘位置", 120)]:
             self.tree_page.heading(col, text=col)
             self.tree_page.column(col, width=width, anchor='center')
         self.tree_page.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -189,7 +189,7 @@ class PagingVisualizer(tk.Toplevel):
             )
             self.mem_canvas.create_text(
                 x + size / 2, y + size / 2,
-                text=f"页{frame}\n{'使用中' if used else '空闲'}",
+                text=f"块{frame}\n{'使用中' if used else '空闲'}",
                 font=('宋体', 10),
                 fill="white" if used else "black"
             )
