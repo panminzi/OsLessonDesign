@@ -86,7 +86,7 @@ class MainInterface:
                                   style="Title.TLabel")
         version_label.pack(side=tk.BOTTOM, pady=10)
 
-        # ...（其他方法保持不变）
+
         for text, command in buttons:
             btn = ttk.Button(btn_frame,
                              text=text,

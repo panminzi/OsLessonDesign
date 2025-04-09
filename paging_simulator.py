@@ -56,39 +56,45 @@ class PagingManager:
             return physical, True, (victim_page, victim_frame)
 
     def handle_page_fault(self, job_id, page_number):
-        entry = self.page_table[page_number]
-        frames = self.allocated_frames[job_id]
-        fifo_queue = self.job_fifo[job_id]
+        """处理缺页中断的核心算法（FIFO页面置换）"""
+        #获取目标页表项和作业的帧资源
+        entry = self.page_table[page_number]#获取目标页表项和作业的帧资源
+        frames = self.allocated_frames[job_id]#获取目标页表项和作业的帧资源
+        fifo_queue = self.job_fifo[job_id]# 维护帧使用顺序的FIFO队列
 
         # 查找空闲帧
         for frame in frames:
             if self.is_frame_free(frame):
+               # 维护帧使用顺序的FIFO队列
                 entry.frame_number = frame
-                entry.present = True
-                fifo_queue.append(frame)
-                return (None, None)
+                entry.present = True  #维护帧使用顺序的FIFO队列
+                fifo_queue.append(frame)#维护帧使用顺序的FIFO队列
+                return (None, None)#维护帧使用顺序的FIFO队列
 
-        # FIFO置换
+        # FIFO置换，维护帧使用顺序的FIFO队列
         victim_frame = fifo_queue.popleft()
         # 精确查找被置换页
         victim_page = None
         for p, e in self.page_table.items():  # 遍历所有页表项
             if e.frame_number == victim_frame and e.present:
-                victim_page = p
+                victim_page = p #维护帧使用顺序的FIFO队列
                 break
-
+        # 如果被置换页曾被修改，需要写回磁盘
         if self.page_table[victim_page].modified:
             print(f"写回磁盘: 页{victim_page}")
 
-        self.page_table[victim_page].present = False
-        self.page_table[victim_page].frame_number = -1
-
+        # 更新被置换页的状态
+        self.page_table[victim_page].present = False#更新被置换页的状态
+        self.page_table[victim_page].frame_number = -1#更新被置换页的状态
+        # 更新被置换页的状态
         entry.frame_number = victim_frame
         entry.present = True
         fifo_queue.append(victim_frame)
         return (victim_page, victim_frame)
 
     def is_frame_free(self, frame):
+          # 遍历所有页表项，检查是否有页占用该帧且处于内存中
+          # 遍历所有页表项，检查是否有页占用该帧且处于内存中
         return not any(e.frame_number == frame and e.present
                        for e in self.page_table.values())
 
